@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-5CqFkq5WL+0w09M0txIvpgd7/jfcIS70r0CkaTtrZhs='; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' blob: data: https:; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>面试资料库</title>
+  <script>
+    (() => {
+      const storageKey = "java-ai-reader-theme";
+      const choices = ["auto", "light", "dark"];
+      const preference = window.matchMedia("(prefers-color-scheme: dark)");
+      let mode = "auto";
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (choices.includes(saved)) mode = saved;
+      } catch {}
+
+      function applyTheme() {
+        document.documentElement.dataset.theme = mode === "auto"
+          ? (preference.matches ? "dark" : "light")
+          : mode;
+        const control = document.getElementById("theme");
+        if (control) control.value = mode;
+      }
+
+      applyTheme();
+      preference.addEventListener("change", applyTheme);
+      window.addEventListener("storage", event => {
+        if (event.key !== storageKey && event.key !== null) return;
+        mode = choices.includes(event.newValue) ? event.newValue : "auto";
+        applyTheme();
+      });
+      document.addEventListener("DOMContentLoaded", () => {
+        const control = document.getElementById("theme");
+        control.value = mode;
+        control.addEventListener("change", () => {
+          mode = control.value;
+          try { localStorage.setItem(storageKey, mode); } catch {}
+          applyTheme();
+        });
+      });
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f5f7fa;
+      --header-height: 66px;
+      --surface: #fff;
+      --text: #233047;
+      --heading: #172c46;
+      --muted: #64748b;
+      --border: #dce3ec;
+      --link: #2059a8;
+      --hover: #edf3fb;
+      --active: #e4edfa;
+      --active-text: #174e97;
+      --nav-text: #3a4d64;
+      --code: #f5f7fa;
+      --inline-code: #eef2f7;
+      --quote: #f6f8fb;
+      --quote-text: #52647b;
+      --quote-border: #94afd1;
+      --table-heading: #eef3f9;
+      --focus: #2059a8;
+      --shadow: #23304733;
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: var(--background);
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --background: #141414;
+      --surface: #1b1b1b;
+      --text: #dedede;
+      --heading: #f2f2f2;
+      --muted: #a1a1a1;
+      --border: #353535;
+      --link: #a8c7fa;
+      --hover: #292929;
+      --active: #283546;
+      --active-text: #c9ddff;
+      --nav-text: #c9c9c9;
+      --code: #222;
+      --inline-code: #303030;
+      --quote: #242424;
+      --quote-text: #c0c0c0;
+      --quote-border: #6c87a8;
+      --table-heading: #292929;
+      --focus: #a8c7fa;
+      --shadow: #0008;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: var(--link); text-underline-offset: 3px; overflow-wrap: anywhere; }
+    button, select, input { font: inherit; }
+    button, select { border: 1px solid var(--border); border-radius: 7px; background: var(--surface); padding: 7px 10px; color: inherit; }
+    button { cursor: pointer; }
+    button:hover { background: var(--hover); }
+    button:disabled { opacity: .4; cursor: default; }
+    .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 12px 22px; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .brand { color: var(--text); text-decoration: none; font-weight: 700; margin-right: auto; }
+    #collections { display: flex; gap: 5px; }
+    #collections a { margin: 0; padding: 9px 12px; white-space: nowrap; text-align: center; font-weight: 600; }
+    #topic-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    #topic-nav a { margin: 0; border: 1px solid var(--border); }
+    #selection:empty { display: none; }
+    .layout { display: grid; grid-template-columns: 275px minmax(0, 1fr); max-width: 1320px; margin: auto; }
+    aside { position: sticky; top: var(--header-height); align-self: start; height: calc(100dvh - var(--header-height)); overflow-y: auto; padding: 22px 18px; border-right: 1px solid var(--border); }
+    #filter { width: 100%; border: 1px solid var(--border); border-radius: 7px; padding: 9px 10px; background: var(--surface); color: var(--text); }
+    #filter::placeholder { color: var(--muted); }
+    :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+    .nav-label { color: var(--muted); font-size: 12px; margin: 20px 8px 8px; }
+    nav a { display: block; padding: 9px 10px; margin: 2px 0; border-radius: 7px; color: var(--nav-text); text-decoration: none; font-size: 14px; line-height: 1.5; }
+    nav a:hover, nav a[aria-current] { background: var(--active); color: var(--active-text); }
+    .result-chapter { display: block; color: var(--muted); font-size: 11px; }
+    main { min-width: 0; padding: 28px clamp(18px, 4vw, 58px) 50px; background: var(--surface); min-height: calc(100dvh - var(--header-height)); }
+    .meta { display: flex; flex-wrap: wrap; gap: 9px 18px; font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+    article { font-size: 16px; line-height: 1.85; overflow-wrap: anywhere; }
+    h1, h2, h3, h4, h5, h6, article [id] { line-height: 1.5; color: var(--heading); scroll-margin-top: calc(var(--header-height) + 20px); }
+    h1 { font-size: 28px; }
+    h2 { margin: 0 0 24px; font-size: 25px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+    h3 { margin: 34px 0 14px; font-size: 20px; }
+    h4 { margin-top: 25px; font-size: 17px; }
+    h2:focus, h3:focus, h4:focus { outline: none; }
+    p { margin: 13px 0; }
+    li { margin: 4px 0; }
+    ul, ol { padding-left: 25px; }
+    img { display: block; max-width: 100%; width: auto; height: auto; margin: 22px auto; border-radius: 5px; background: #fff; }
+    img:not([src]) { min-height: 44px; background: var(--hover); }
+    .image-link { display: block; }
+    pre { padding: 18px; border: 1px solid var(--border); background: var(--code); border-radius: 8px; overflow: auto; line-height: 1.65; }
+    code { font-family: Consolas, "Cascadia Code", monospace; font-size: .9em; }
+    :not(pre) > code { background: var(--inline-code); padding: 2px 5px; border-radius: 4px; }
+    blockquote { margin: 18px 0; padding: 1px 17px; border-left: 3px solid var(--quote-border); color: var(--quote-text); background: var(--quote); }
+    table { border-collapse: collapse; display: block; max-width: 100%; overflow-x: auto; margin: 20px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+    th { background: var(--table-heading); }
+    .chapter-list { display: grid; gap: 8px; list-style: none; padding: 0; }
+    .chapter-list a { display: block; border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; text-decoration: none; }
+    .chapter-list a:hover { background: var(--hover); }
+    .chapter-list a small { display: block; color: var(--muted); font-size: .85rem; }
+    .book-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+    .chapter-footer { display: flex; justify-content: space-between; gap: 18px; padding-top: 30px; margin-top: 30px; border-top: 1px solid var(--border); }
+    #status { font-size: 12px; color: var(--muted); }
+    .offline-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 24px; }
+    #offline-status { font-size: 12px; color: var(--muted); }
+    #menu { display: none; }
+    [hidden] { display: none !important; }
+    #unlock { width: min(100% - 32px, 470px); margin: clamp(35px, 13vh, 145px) auto; padding: 26px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    #unlock h1 { margin: 0 0 10px; font-size: 25px; }
+    #unlock-form { display: grid; gap: 10px; margin-top: 20px; }
+    #unlock-form input { width: 100%; border: 1px solid var(--border); border-radius: 7px; background: var(--background); color: var(--text); padding: 11px 12px; }
+    #unlock-form button { justify-self: start; min-height: 44px; }
+    #unlock-status { color: var(--muted); font-size: .875rem; }
+    @media (max-width: 900px) {
+      .topbar { padding: 8px 12px; gap: 7px; }
+      .brand { font-size: 14px; }
+      .topbar select { max-width: 150px; font-size: 14px; }
+      #theme { max-width: 108px; }
+      .topbar button, .topbar select, nav a { min-height: 44px; }
+      .layout { display: block; }
+      #menu { display: block; }
+      aside { display: none; }
+      body.nav-open aside { display: block; position: fixed; z-index: 4; left: 0; top: var(--header-height); height: calc(100dvh - var(--header-height)); width: min(88vw, 350px); background: var(--background); box-shadow: 12px 0 30px var(--shadow); }
+      main { padding: 20px 19px 40px; }
+      h2 { font-size: 22px; }
+      h3 { font-size: 18px; }
+    }
+    @media (max-width: 650px) {
+      .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; }
+      #collections { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-column: 1 / -1; grid-row: 2; gap: 3px; }
+      #collections a { padding: 10px 2px; font-size: .85rem; min-width: 0; }
+      #theme { max-width: 105px; }
+    }
+  </style>
+</head>
+<body>
+  <section id="unlock" hidden aria-labelledby="unlock-title">
+    <h1 id="unlock-title">面试资料库</h1>
+    <p>输入阅读口令，在当前设备解锁资料。</p>
+    <form id="unlock-form">
+      <label for="passphrase">阅读口令</label>
+      <input id="passphrase" type="password" autocomplete="current-password" required spellcheck="false">
+      <button type="submit">解锁阅读</button>
+      <span id="unlock-status" role="status" aria-live="polite"></span>
+    </form>
+  </section>
+  <header class="topbar" hidden>
+    <a class="brand" href="#library/">面试资料库</a>
+    <nav id="collections" aria-label="一级目录"></nav>
+    <select id="theme" aria-label="阅读主题" title="跟随环境使用浏览器或系统的配色偏好">
+      <option value="auto">跟随环境</option>
+      <option value="dark">深色</option>
+      <option value="light">浅色</option>
+    </select>
+    <button id="menu" type="button" aria-controls="sidebar" aria-expanded="false">目录</button>
+  </header>
+  <div class="layout" hidden>
+    <aside id="sidebar">
+      <input id="filter" type="search" placeholder="查找章节或问题" aria-label="查找章节或问题">
+      <div class="nav-label" id="nav-label">章节目录</div>
+      <nav id="navigation" aria-label="文档目录"></nav>
+    </aside>
+    <main>
+      <nav id="topic-nav" aria-label="二级目录"></nav>
+      <div class="meta"><span id="location">正在加载目录</span><a id="source" hidden>完整 Markdown</a><span id="status" role="status" aria-live="polite"></span></div>
+      <div class="offline-controls"><button id="download-offline" type="button" disabled>下载离线资料</button><span id="offline-status" role="status" aria-live="polite">正在准备离线阅读…</span></div>
+      <article id="content"></article>
+      <footer class="chapter-footer" hidden><button id="previous" type="button" disabled>上一篇</button><button id="next" type="button" disabled>下一篇</button></footer>
+    </main>
+  </div>
+  <script src="reader.js"></script>
+  <script src="vault.js"></script>
+  <script src="offline.js"></script>
+</body>
+</html>
