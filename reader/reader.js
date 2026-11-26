@@ -64,6 +64,51 @@ window.startReader = function startReader(catalog, vault) {
     return chapter.headings.filter(heading => heading.level === (chapter.questionLevel ?? 3));
   }
 
+  function prepareChapterToc(book, chapter) {
+    if (content.querySelector(".chapter-toc")) return;
+    const title = content.firstElementChild;
+    if (title?.id !== chapter.id) return;
+
+    const directory = route(book.id, chapter.group ? "~" + chapter.group : "");
+    const first = title.nextElementSibling;
+    const back = first?.matches("p") && first.querySelector(`a[href="${directory}"]`) ? first : null;
+    let label = back ? back.nextElementSibling : first;
+    while (label?.matches("p") && label.textContent.trim() !== "本章导航") {
+      label = label.nextElementSibling;
+    }
+    const list = label?.nextElementSibling;
+    const nativeToc = label?.matches("p") && list?.matches("ul, ol");
+    const headings = chapter.headings.filter(heading => heading.id !== chapter.id);
+    if (!nativeToc && headings.length &&
+        (headings.length < 2 || content.textContent.includes("本章导航"))) return;
+
+    const nav = document.createElement("nav");
+    nav.className = "chapter-toc";
+    nav.setAttribute("aria-label", "本章导航");
+    title.after(nav);
+    if (back) nav.append(back);
+    else {
+      const paragraph = document.createElement("p");
+      paragraph.append(link("返回总目录", directory));
+      nav.append(paragraph);
+    }
+    if (nativeToc) nav.append(label, list);
+    else if (headings.length >= 2) {
+      const caption = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.textContent = "本章导航";
+      caption.append(strong);
+      const outline = document.createElement("ul");
+      const questions = questionHeadings(chapter);
+      for (const heading of questions.length ? questions : headings) {
+        const item = document.createElement("li");
+        item.append(link(heading.title, route(book.id, heading.id)));
+        outline.append(item);
+      }
+      nav.append(caption, outline);
+    }
+  }
+
   function updateStudyControls() {
     studyControls.hidden = !questions.length;
     studyActions.hidden = !studyMode;
@@ -380,8 +425,10 @@ window.startReader = function startReader(catalog, vault) {
     try {
       const markup = await loadChapter(book, chapter);
       if (version !== routeVersion) return;
-      if (renderedChapter !== chapter) {
+      const sameChapter = renderedChapter === chapter;
+      if (!sameChapter) {
         renderMarkup(markup);
+        prepareChapterToc(book, chapter);
         prepareQuestions(chapter);
         renderedChapter = chapter;
       }
@@ -400,7 +447,8 @@ window.startReader = function startReader(catalog, vault) {
         highlighted.classList.add("heading-highlight");
         const control = studyMode && questions.find(item => item.heading === target)?.button;
         (control || target).focus({ preventScroll: true });
-        target.scrollIntoView({ block: "start", behavior: "instant" });
+        const smooth = sameChapter && studyMode && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+        target.scrollIntoView({ block: "start", behavior: smooth ? "smooth" : "instant" });
       }
       status.textContent = "";
     } catch (error) {

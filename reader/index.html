@@ -125,7 +125,15 @@
     h2 { margin: 0 0 24px; font-size: 25px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
     h3 { margin: 34px 0 14px; font-size: 20px; }
     h4 { margin-top: 25px; font-size: 17px; }
-    h2:focus, h3:focus, h4:focus { outline: none; }
+    :is(h2, h3, h4):focus:not(.heading-highlight) { outline: none; }
+    .chapter-toc { margin: 0 0 22px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--quote); font-size: .875rem; line-height: 1.5; }
+    .chapter-toc p { margin: 0; }
+    .chapter-toc p + p { margin-top: 5px; }
+    .chapter-toc ul, .chapter-toc ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1px 12px; max-height: min(17rem, 38vh); overflow-y: auto; margin: 5px 0 0; padding: 3px 4px; list-style: none; }
+    .chapter-toc li { margin: 0; }
+    .chapter-toc a { min-height: 0; margin: 0; padding: 4px 5px; color: var(--link); }
+    .chapter-toc p a { display: inline-block; padding-inline: 0; text-decoration: underline; }
+    .chapter-toc a:focus-visible { outline-offset: -2px; }
     .question-heading { padding-top: 12px; border-top: 1px solid var(--border); }
     .heading-highlight { background: var(--active); border-radius: 8px; outline: 2px solid var(--focus); outline-offset: 3px; }
     .study-mode .question-heading { padding: 0; border: 0; margin: 20px 0 10px; }
