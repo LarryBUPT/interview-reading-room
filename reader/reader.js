@@ -13,6 +13,10 @@ window.startReader = function startReader(catalog, vault) {
   const source = byId("source");
   const previous = byId("previous");
   const next = byId("next");
+  const studyControls = byId("study-controls");
+  const studyToggle = byId("study-toggle");
+  const studyActions = byId("study-actions");
+  const studyKey = "interview-reader-self-test";
   const header = document.querySelector(".topbar");
   const chapterCache = new Map();
   const pending = new Map();
@@ -22,6 +26,10 @@ window.startReader = function startReader(catalog, vault) {
   let routeVersion = 0;
   let imageObserver;
   let imageUrls = [];
+  let questions = [];
+  let highlighted;
+  let studyMode = false;
+  try { studyMode = localStorage.getItem(studyKey) === "true"; } catch {}
 
   for (const book of books.values()) {
     const headings = new Map();
@@ -50,6 +58,78 @@ window.startReader = function startReader(catalog, vault) {
 
   function groups(book) {
     return [...new Set(book.chapters.map(chapter => chapter.group).filter(Boolean))];
+  }
+
+  function questionHeadings(chapter) {
+    return chapter.headings.filter(heading => heading.level === (chapter.questionLevel ?? 3));
+  }
+
+  function updateStudyControls() {
+    studyControls.hidden = !questions.length;
+    studyActions.hidden = !studyMode;
+    studyToggle.textContent = studyMode ? "自测模式：开" : "自测模式";
+    studyToggle.setAttribute("aria-pressed", String(studyMode));
+  }
+
+  function setAnswer(question, open) {
+    question.answer.hidden = !open;
+    question.button.setAttribute("aria-expanded", String(open));
+    question.hint.textContent = open ? "收起答案" : "点击看答案";
+  }
+
+  function prepareQuestions(chapter) {
+    questions = questionHeadings(chapter).flatMap(({ id }) => {
+      const heading = document.getElementById(id);
+      // Each question owns the sibling blocks up to the next peer or parent heading.
+      if (heading?.parentElement !== content) return [];
+      const answer = document.createElement("div");
+      answer.className = "question-answer";
+      answer.id = id + "--answer";
+      let node = heading.nextSibling;
+      const level = Number(heading.tagName[1]);
+      while (node && !(node.nodeType === Node.ELEMENT_NODE && /^H[1-6]$/.test(node.tagName)
+        && Number(node.tagName[1]) <= level)) {
+        const following = node.nextSibling;
+        answer.append(node);
+        node = following;
+      }
+      heading.after(answer);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "question-toggle";
+      button.setAttribute("aria-controls", answer.id);
+      const label = document.createElement("span");
+      label.append(...heading.childNodes);
+      const hint = document.createElement("span");
+      hint.className = "question-hint";
+      button.append(label, hint);
+      heading.classList.add("question-heading");
+      heading.append(button);
+      const question = { heading, button, label, hint, answer };
+      button.addEventListener("click", () => setAnswer(question, answer.hidden));
+      for (const lead of answer.querySelectorAll("p > strong:first-child")) {
+        if (lead.textContent === "一句话结论") lead.classList.add("answer-lead");
+      }
+      return [question];
+    });
+    applyStudyMode();
+  }
+
+  function applyStudyMode() {
+    for (const question of questions) {
+      const { heading, button, label } = question;
+      if (studyMode) {
+        if (!heading.contains(button)) {
+          label.append(...heading.childNodes);
+          heading.append(button);
+        }
+      } else if (heading.contains(button)) {
+        button.replaceWith(...label.childNodes);
+      }
+      setAnswer(question, !studyMode);
+    }
+    content.classList.toggle("study-mode", studyMode);
+    updateStudyControls();
   }
 
   function groupNav(book, group) {
@@ -93,7 +173,8 @@ window.startReader = function startReader(catalog, vault) {
     }
     if (chapter) {
       const outline = document.createDocumentFragment();
-      for (const heading of chapter.headings) {
+      const headings = questionHeadings(chapter);
+      for (const heading of headings.length ? headings : chapter.headings) {
         if (heading.id === chapter.id) continue;
         outline.append(link(heading.title, route(book.id, heading.id), heading.id === selection.heading));
       }
@@ -103,7 +184,7 @@ window.startReader = function startReader(catalog, vault) {
       }
     }
     const entries = book.chapters.filter(item => !group || item.group === group);
-    if (!group && groups(book).length) navigation.append(...groupNav(book));
+    if (!group && groups(book).length > 1) navigation.append(...groupNav(book));
     else navigation.append(...entries.map(item => link(item.title, route(book.id, item.id), item === chapter)));
   }
 
@@ -132,6 +213,9 @@ window.startReader = function startReader(catalog, vault) {
     }
     content.replaceChildren(heading, list);
     renderedChapter = undefined;
+    questions = [];
+    highlighted = undefined;
+    updateStudyControls();
   }
 
   function renderOverview({ collection, book, group }) {
@@ -154,7 +238,10 @@ window.startReader = function startReader(catalog, vault) {
       return;
     }
     showIndex(group || book.title, book.chapters.filter(item => !group || item.group === group)
-      .map(item => [item.title, route(book.id, item.id)]));
+      .map(item => {
+        const count = item.questionCount ?? questionHeadings(item).length;
+        return [item.title, route(book.id, item.id), count ? count + " 题" : ""];
+      }));
   }
 
   function oldChapter(file, key) {
@@ -268,7 +355,7 @@ window.startReader = function startReader(catalog, vault) {
     primaryNav.replaceChildren(...collections.map(item => link(item.title, route(item.id), item === collection)));
     const sublinks = collection?.id === "java"
       ? collection.books.map(id => link(books.get(id).title, route(id), book?.id === id))
-      : book ? groupNav(book, group) : [];
+      : book && groups(book).length > 1 ? groupNav(book, group) : [];
     topicNav.replaceChildren(...sublinks);
     topicNav.hidden = !sublinks.length;
     byId("location").textContent = [collection?.title, collection?.id === "java" ? book?.title : group, chapter?.title]
@@ -295,16 +382,24 @@ window.startReader = function startReader(catalog, vault) {
       if (version !== routeVersion) return;
       if (renderedChapter !== chapter) {
         renderMarkup(markup);
+        prepareQuestions(chapter);
         renderedChapter = chapter;
       }
       const target = document.getElementById(heading);
       if (!target || !content.contains(target)) throw new Error("目录中找不到该标题。");
+      highlighted?.classList.remove("heading-highlight");
+      highlighted = undefined;
+      const question = questions.find(item => item.answer.contains(target));
+      if (question?.answer.hidden) setAnswer(question, true);
       for (let ancestor = target.parentElement; ancestor && ancestor !== content; ancestor = ancestor.parentElement) {
         if (ancestor.tagName === "DETAILS") ancestor.open = true;
       }
       if (heading === chapter.id) window.scrollTo(0, 0);
       else {
-        target.focus({ preventScroll: true });
+        highlighted = question?.heading || target;
+        highlighted.classList.add("heading-highlight");
+        const control = studyMode && questions.find(item => item.heading === target)?.button;
+        (control || target).focus({ preventScroll: true });
         target.scrollIntoView({ block: "start", behavior: "instant" });
       }
       status.textContent = "";
@@ -314,6 +409,9 @@ window.startReader = function startReader(catalog, vault) {
       content.textContent = error.message;
       status.textContent = "加载失败";
       renderedChapter = undefined;
+      questions = [];
+      highlighted = undefined;
+      updateStudyControls();
     }
   }
 
@@ -343,6 +441,17 @@ window.startReader = function startReader(catalog, vault) {
     "--header-height", Math.ceil(header.getBoundingClientRect().height) + "px",
   )).observe(header);
   filter.addEventListener("input", updateNavigation);
+  studyToggle.addEventListener("click", () => {
+    studyMode = !studyMode;
+    try { localStorage.setItem(studyKey, String(studyMode)); } catch {}
+    applyStudyMode();
+  });
+  byId("study-expand").addEventListener("click", () => {
+    for (const question of questions) setAnswer(question, true);
+  });
+  byId("study-collapse").addEventListener("click", () => {
+    for (const question of questions) setAnswer(question, false);
+  });
   source.addEventListener("click", event => {
     if (!vault || !selection.book?.source) return;
     event.preventDefault();

@@ -1,25 +1,13 @@
-const CACHE_VERSION = "e9636971ad7df19a3ae9";
+const CACHE_VERSION = "c1d15dcc22f5ac37c339";
 const APP_ROOT = new URL("./", self.location.href);
 const CACHE_PREFIX = "java-ai-reader:" + APP_ROOT.pathname + ":";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
-const REVOKED_CACHE_VERSIONS = ["67a48e84df0635720f29"];
 const COMPLETE_URL = new URL(".offline-complete", APP_ROOT).href;
 const MANIFEST_URL = new URL("offline-manifest.json", APP_ROOT).href;
 const SHELL_PATHS = ["./", "reader/", "reader/index.html", "reader/reader.js", "reader/vault.js", "reader/offline.js", "offline-manifest.json"];
 let downloadJob = null;
 let progress = { completed: 0, total: 0 };
 const downloadPorts = new Set();
-
-async function readingCache() {
-  const current = await caches.open(CACHE_NAME);
-  if (await current.match(COMPLETE_URL)) return { name: CACHE_NAME, cache: current };
-  const names = (await caches.keys()).filter(name => name.startsWith(CACHE_PREFIX)).reverse();
-  for (const name of names) {
-    const previous = await caches.open(name);
-    if (await previous.match(COMPLETE_URL)) return { name, cache: previous };
-  }
-  return { name: CACHE_NAME, cache: current };
-}
 
 async function checkedFetch(url) {
   const controller = new AbortController();
@@ -54,7 +42,8 @@ self.addEventListener("install", event => {
 
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
-    await Promise.all(REVOKED_CACHE_VERSIONS.map(version => caches.delete(CACHE_PREFIX + version)));
+    const expired = (await caches.keys()).filter(name => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME);
+    await Promise.all(expired.map(name => caches.delete(name)));
     await self.clients.claim();
   })());
 });
@@ -63,7 +52,7 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET" || url.origin !== APP_ROOT.origin || !url.pathname.startsWith(APP_ROOT.pathname)) return;
   event.respondWith((async () => {
-    const { cache } = await readingCache();
+    const cache = await caches.open(CACHE_NAME);
     const saved = await cache.match(event.request, { ignoreSearch: true });
     if (saved) return saved;
     try {
@@ -106,9 +95,6 @@ async function downloadAll() {
     await cache.put(url, await checkedFetch(url));
   }
   await cache.put(COMPLETE_URL, new Response(CACHE_VERSION));
-  for (const name of await caches.keys()) {
-    if (name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME) await caches.delete(name);
-  }
 }
 
 self.addEventListener("message", event => {
@@ -116,8 +102,8 @@ self.addEventListener("message", event => {
   if (!port) return;
   if (event.data?.type === "status") {
     event.waitUntil((async () => {
-      const { name, cache } = await readingCache();
-      port.postMessage({ type: "status", complete: !!(await cache.match(COMPLETE_URL)), current: name === CACHE_NAME });
+      const cache = await caches.open(CACHE_NAME);
+      port.postMessage({ type: "status", complete: !!(await cache.match(COMPLETE_URL)), current: true });
     })());
   }
   if (event.data?.type === "download") {

@@ -5,6 +5,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-5CqFkq5WL+0w09M0txIvpgd7/jfcIS70r0CkaTtrZhs='; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' blob: data: https:; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
   <title>面试资料库</title>
   <script>
     (() => {
@@ -103,7 +104,7 @@
     .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 12px 22px; background: var(--surface); border-bottom: 1px solid var(--border); }
     .brand { color: var(--text); text-decoration: none; font-weight: 700; margin-right: auto; }
     #collections { display: flex; gap: 5px; }
-    #collections a { margin: 0; padding: 9px 12px; white-space: nowrap; text-align: center; font-weight: 600; }
+    #collections a { margin: 0; padding: 9px clamp(8px, 1.1vw, 16px); white-space: nowrap; text-align: center; font-weight: 600; }
     #topic-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
     #topic-nav a { margin: 0; border: 1px solid var(--border); }
     #selection:empty { display: none; }
@@ -125,6 +126,16 @@
     h3 { margin: 34px 0 14px; font-size: 20px; }
     h4 { margin-top: 25px; font-size: 17px; }
     h2:focus, h3:focus, h4:focus { outline: none; }
+    .question-heading { padding-top: 12px; border-top: 1px solid var(--border); }
+    .heading-highlight { background: var(--active); border-radius: 8px; outline: 2px solid var(--focus); outline-offset: 3px; }
+    .study-mode .question-heading { padding: 0; border: 0; margin: 20px 0 10px; }
+    .question-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; width: 100%; padding: 12px 15px; text-align: left; line-height: 1.45; color: inherit; }
+    .question-toggle[aria-expanded="true"] { background: var(--hover); }
+    .question-hint { flex: 0 0 auto; color: var(--link); font-size: .875rem; font-weight: 600; }
+    .study-mode .question-answer { padding: 0 12px 8px; border-left: 2px solid var(--border); }
+    .study-controls, .study-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .study-controls { margin-bottom: 22px; }
+    #study-toggle[aria-pressed="true"] { background: var(--active); color: var(--active-text); border-color: var(--focus); font-weight: 650; }
     p { margin: 13px 0; }
     li { margin: 4px 0; }
     ul, ol { padding-left: 25px; }
@@ -134,7 +145,9 @@
     pre { padding: 18px; border: 1px solid var(--border); background: var(--code); border-radius: 8px; overflow: auto; line-height: 1.65; }
     code { font-family: Consolas, "Cascadia Code", monospace; font-size: .9em; }
     :not(pre) > code { background: var(--inline-code); padding: 2px 5px; border-radius: 4px; }
-    blockquote { margin: 18px 0; padding: 1px 17px; border-left: 3px solid var(--quote-border); color: var(--quote-text); background: var(--quote); }
+    blockquote { margin: 18px 0; padding: 3px 17px; border-left: 3px solid var(--quote-border); border-radius: 0 8px 8px 0; color: var(--quote-text); background: var(--quote); }
+    .question-answer > p > strong:first-child { color: var(--heading); }
+    .question-answer > p > .answer-lead { color: var(--active-text); }
     table { border-collapse: collapse; display: block; max-width: 100%; overflow-x: auto; margin: 20px 0; }
     th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
     th { background: var(--table-heading); }
@@ -155,8 +168,10 @@
     #unlock-form input { width: 100%; border: 1px solid var(--border); border-radius: 7px; background: var(--background); color: var(--text); padding: 11px 12px; }
     #unlock-form button { justify-self: start; min-height: 44px; }
     #unlock-status { color: var(--muted); font-size: .875rem; }
-    @media (max-width: 900px) {
-      .topbar { padding: 8px 12px; gap: 7px; }
+    @media (max-width: 960px) {
+      .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; padding: 8px 12px; gap: 7px; }
+      #collections { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-column: 1 / -1; grid-row: 2; gap: 4px; }
+      #collections a { display: grid; place-items: center; padding: 6px 3px; }
       .brand { font-size: 14px; }
       .topbar select { max-width: 150px; font-size: 14px; }
       #theme { max-width: 108px; }
@@ -170,9 +185,8 @@
       h3 { font-size: 18px; }
     }
     @media (max-width: 650px) {
-      .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; }
-      #collections { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-column: 1 / -1; grid-row: 2; gap: 3px; }
-      #collections a { padding: 10px 2px; font-size: .85rem; min-width: 0; }
+      #collections { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      #collections a { font-size: .875rem; min-width: 0; }
       #theme { max-width: 105px; }
     }
   </style>
@@ -208,6 +222,13 @@
       <nav id="topic-nav" aria-label="二级目录"></nav>
       <div class="meta"><span id="location">正在加载目录</span><a id="source" hidden>完整 Markdown</a><span id="status" role="status" aria-live="polite"></span></div>
       <div class="offline-controls"><button id="download-offline" type="button" disabled>下载离线资料</button><span id="offline-status" role="status" aria-live="polite">正在准备离线阅读…</span></div>
+      <div id="study-controls" class="study-controls" hidden aria-label="背诵自测">
+        <button id="study-toggle" type="button" aria-pressed="false">自测模式</button>
+        <div id="study-actions" class="study-actions" hidden>
+          <button id="study-expand" type="button">全部展开</button>
+          <button id="study-collapse" type="button">全部收起</button>
+        </div>
+      </div>
       <article id="content"></article>
       <footer class="chapter-footer" hidden><button id="previous" type="button" disabled>上一篇</button><button id="next" type="button" disabled>下一篇</button></footer>
     </main>
