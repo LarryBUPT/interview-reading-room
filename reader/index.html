@@ -104,6 +104,8 @@
     .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 12px 22px; background: var(--surface); border-bottom: 1px solid var(--border); }
     .brand { color: var(--text); text-decoration: none; font-weight: 700; margin-right: auto; }
     #collections { display: flex; gap: 5px; }
+    #collections a, #navigation a, #topic-nav a { display: block; padding: 9px 10px; margin: 2px 0; border-radius: 7px; color: var(--nav-text); text-decoration: none; font-size: 14px; line-height: 1.5; }
+    :is(#collections, #navigation, #topic-nav) a:is(:hover, [aria-current]) { background: var(--active); color: var(--active-text); }
     #collections a { margin: 0; padding: 9px clamp(8px, 1.1vw, 16px); white-space: nowrap; text-align: center; font-weight: 600; }
     #topic-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
     #topic-nav a { margin: 0; border: 1px solid var(--border); }
@@ -114,8 +116,6 @@
     #filter::placeholder { color: var(--muted); }
     :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
     .nav-label { color: var(--muted); font-size: 12px; margin: 20px 8px 8px; }
-    nav a { display: block; padding: 9px 10px; margin: 2px 0; border-radius: 7px; color: var(--nav-text); text-decoration: none; font-size: 14px; line-height: 1.5; }
-    nav a:hover, nav a[aria-current] { background: var(--active); color: var(--active-text); }
     .result-chapter { display: block; color: var(--muted); font-size: 11px; }
     main { min-width: 0; padding: 28px clamp(18px, 4vw, 58px) 50px; background: var(--surface); min-height: calc(100dvh - var(--header-height)); }
     .meta { display: flex; flex-wrap: wrap; gap: 9px 18px; font-size: 12px; color: var(--muted); margin-bottom: 24px; }
@@ -126,14 +126,6 @@
     h3 { margin: 34px 0 14px; font-size: 20px; }
     h4 { margin-top: 25px; font-size: 17px; }
     :is(h2, h3, h4):focus:not(.heading-highlight) { outline: none; }
-    .chapter-toc { margin: 0 0 22px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--quote); font-size: .875rem; line-height: 1.5; }
-    .chapter-toc p { margin: 0; }
-    .chapter-toc p + p { margin-top: 5px; }
-    .chapter-toc ul, .chapter-toc ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1px 12px; max-height: min(17rem, 38vh); overflow-y: auto; margin: 5px 0 0; padding: 3px 4px; list-style: none; }
-    .chapter-toc li { margin: 0; }
-    .chapter-toc a { min-height: 0; margin: 0; padding: 4px 5px; color: var(--link); }
-    .chapter-toc p a { display: inline-block; padding-inline: 0; text-decoration: underline; }
-    .chapter-toc a:focus-visible { outline-offset: -2px; }
     .question-heading { padding-top: 12px; border-top: 1px solid var(--border); }
     .heading-highlight { background: var(--active); border-radius: 8px; outline: 2px solid var(--focus); outline-offset: 3px; }
     .study-mode .question-heading { padding: 0; border: 0; margin: 20px 0 10px; }
@@ -183,7 +175,7 @@
       .brand { font-size: 14px; }
       .topbar select { max-width: 150px; font-size: 14px; }
       #theme { max-width: 108px; }
-      .topbar button, .topbar select, nav a { min-height: 44px; }
+      .topbar button, .topbar select, #collections a, #navigation a, #topic-nav a { min-height: 44px; }
       .layout { display: block; }
       #menu { display: block; }
       aside { display: none; }

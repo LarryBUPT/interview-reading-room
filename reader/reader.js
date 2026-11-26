@@ -65,48 +65,38 @@ window.startReader = function startReader(catalog, vault) {
   }
 
   function prepareChapterToc(book, chapter) {
-    if (content.querySelector(".chapter-toc")) return;
     const title = content.firstElementChild;
     if (title?.id !== chapter.id) return;
 
-    const directory = route(book.id, chapter.group ? "~" + chapter.group : "");
+    const directory = route(book.id);
     const first = title.nextElementSibling;
-    const back = first?.matches("p") && first.querySelector(`a[href="${directory}"]`) ? first : null;
-    let label = back ? back.nextElementSibling : first;
-    while (label?.matches("p") && label.textContent.trim() !== "本章导航") {
-      label = label.nextElementSibling;
-    }
-    const list = label?.nextElementSibling;
-    const nativeToc = label?.matches("p") && list?.matches("ul, ol");
-    const headings = chapter.headings.filter(heading => heading.id !== chapter.id);
-    if (!nativeToc && headings.length &&
-        (headings.length < 2 || content.textContent.includes("本章导航"))) return;
-
-    const nav = document.createElement("nav");
-    nav.className = "chapter-toc";
-    nav.setAttribute("aria-label", "本章导航");
-    title.after(nav);
-    if (back) nav.append(back);
-    else {
+    if (!first?.matches("p") || !first.querySelector('a[href="' + directory + '"]')) {
       const paragraph = document.createElement("p");
       paragraph.append(link("返回总目录", directory));
-      nav.append(paragraph);
+      title.after(paragraph);
     }
-    if (nativeToc) nav.append(label, list);
-    else if (headings.length >= 2) {
-      const caption = document.createElement("p");
-      const strong = document.createElement("strong");
-      strong.textContent = "本章导航";
-      caption.append(strong);
-      const outline = document.createElement("ul");
-      const questions = questionHeadings(chapter);
-      for (const heading of questions.length ? questions : headings) {
-        const item = document.createElement("li");
-        item.append(link(heading.title, route(book.id, heading.id)));
-        outline.append(item);
-      }
-      nav.append(caption, outline);
+
+    const existing = Array.from(content.children).some(node =>
+      node.matches("p") && node.textContent.trim() === "本章导航" &&
+      node.nextElementSibling?.matches("ul, ol"));
+    if (existing) return;
+
+    const headings = chapter.headings.filter(heading => heading.id !== chapter.id);
+    const questions = questionHeadings(chapter);
+    const entries = questions.length ? questions : headings;
+    if (!entries.length) return;
+
+    const caption = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = "本章导航";
+    caption.append(strong);
+    const outline = document.createElement("ul");
+    for (const heading of entries) {
+      const item = document.createElement("li");
+      item.append(link(heading.title, route(book.id, heading.id)));
+      outline.append(item);
     }
+    title.nextElementSibling.after(caption, outline);
   }
 
   function updateStudyControls() {
