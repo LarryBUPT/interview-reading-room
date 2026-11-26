@@ -1,4 +1,4 @@
-const CACHE_VERSION = "e45c0954d276d346e3a9";
+const CACHE_VERSION = "d1d44d62c3987fbd50a1";
 const APP_ROOT = new URL("./", self.location.href);
 const CACHE_PREFIX = "java-ai-reader:" + APP_ROOT.pathname + ":";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;

@@ -275,7 +275,7 @@ window.startReader = function startReader(catalog, vault) {
     showIndex(group || book.title, book.chapters.filter(item => !group || item.group === group)
       .map(item => {
         const count = item.questionCount ?? questionHeadings(item).length;
-        return [item.title, route(book.id, item.id), count ? count + " 题" : ""];
+        return [item.title, route(book.id, item.id), count || book.id === "hot100" ? count + " 题" : ""];
       }));
   }
 

@@ -170,7 +170,7 @@
     #unlock-status { color: var(--muted); font-size: .875rem; }
     @media (max-width: 960px) {
       .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; padding: 8px 12px; gap: 7px; }
-      #collections { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-column: 1 / -1; grid-row: 2; gap: 4px; }
+      #collections { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-column: 1 / -1; grid-row: 2; gap: 4px; }
       #collections a { display: grid; place-items: center; padding: 6px 3px; }
       .brand { font-size: 14px; }
       .topbar select { max-width: 150px; font-size: 14px; }
@@ -185,7 +185,7 @@
       h3 { font-size: 18px; }
     }
     @media (max-width: 650px) {
-      #collections { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      #collections { grid-template-columns: repeat(4, minmax(max-content, 1fr)); }
       #collections a { font-size: .875rem; min-width: 0; }
       #theme { max-width: 105px; }
     }
