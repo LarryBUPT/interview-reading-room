@@ -8,6 +8,10 @@ window.startReader = function startReader(catalog, vault) {
   const navigation = byId("navigation");
   const topicNav = byId("topic-nav");
   const primaryNav = byId("collections");
+  const collectionsGrid = byId("collections-grid");
+  const collectionsToggle = byId("collections-toggle");
+  const brandMenu = primaryNav.parentElement;
+  const brandCurrent = byId("brand-current");
   const filter = byId("filter");
   const status = byId("status");
   const source = byId("source");
@@ -29,6 +33,7 @@ window.startReader = function startReader(catalog, vault) {
   let questions = [];
   let highlighted;
   let studyMode = false;
+  let collectionsHovered = false;
   try { studyMode = localStorage.getItem(studyKey) === "true"; } catch {}
 
   for (const book of books.values()) {
@@ -51,7 +56,20 @@ window.startReader = function startReader(catalog, vault) {
     return element;
   }
 
+  function syncCollections() {
+    const expanded = !brandMenu.classList.contains("dismissed") &&
+      (collectionsHovered || brandMenu.classList.contains("open") || brandMenu.matches(":focus-within"));
+    collectionsToggle.setAttribute("aria-expanded", String(expanded));
+  }
+
+  function dismissCollections() {
+    brandMenu.classList.remove("open");
+    brandMenu.classList.add("dismissed");
+    syncCollections();
+  }
+
   function setMenu(open) {
+    if (open) dismissCollections();
     document.body.classList.toggle("nav-open", open);
     byId("menu").setAttribute("aria-expanded", String(open));
   }
@@ -387,7 +405,9 @@ window.startReader = function startReader(catalog, vault) {
     if (selection.collection !== current.collection) filter.value = "";
     selection = current;
     const { collection, book, chapter, group, heading } = selection;
-    primaryNav.replaceChildren(...collections.map(item => link(item.title, route(item.id), item === collection)));
+    brandCurrent.textContent = collection?.title ?? "";
+    brandCurrent.hidden = !collection;
+    collectionsGrid.replaceChildren(...collections.map(item => link(item.title, route(item.id), item === collection)));
     const sublinks = collection?.id === "java"
       ? collection.books.map(id => link(books.get(id).title, route(id), book?.id === id))
       : book && groups(book).length > 1 ? groupNav(book, group) : [];
@@ -478,6 +498,44 @@ window.startReader = function startReader(catalog, vault) {
   new ResizeObserver(() => document.documentElement.style.setProperty(
     "--header-height", Math.ceil(header.getBoundingClientRect().height) + "px",
   )).observe(header);
+  brandMenu.addEventListener("pointerenter", event => {
+    if (event.pointerType !== "mouse") return;
+    collectionsHovered = true;
+    brandMenu.classList.remove("dismissed");
+    syncCollections();
+  });
+  brandMenu.addEventListener("pointerleave", event => {
+    if (event.pointerType !== "mouse") return;
+    collectionsHovered = false;
+    if (!brandMenu.matches(":focus-within")) brandMenu.classList.remove("dismissed");
+    syncCollections();
+  });
+  brandMenu.addEventListener("focusin", event => {
+    if (!collectionsHovered && !brandMenu.contains(event.relatedTarget)) brandMenu.classList.remove("dismissed");
+    syncCollections();
+  });
+  brandMenu.addEventListener("focusout", () => {
+    queueMicrotask(() => {
+      if (!collectionsHovered && !brandMenu.matches(":focus-within")) brandMenu.classList.remove("dismissed");
+      syncCollections();
+    });
+  });
+  collectionsToggle.addEventListener("click", () => {
+    if (brandMenu.classList.contains("open")) {
+      dismissCollections();
+      return;
+    }
+    setMenu(false);
+    brandMenu.classList.remove("dismissed");
+    brandMenu.classList.add("open");
+    syncCollections();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key !== "Escape" || collectionsToggle.getAttribute("aria-expanded") !== "true") return;
+    const focusInPanel = primaryNav.contains(document.activeElement);
+    dismissCollections();
+    if (focusInPanel) collectionsToggle.focus();
+  });
   filter.addEventListener("input", updateNavigation);
   studyToggle.addEventListener("click", () => {
     studyMode = !studyMode;
@@ -505,11 +563,19 @@ window.startReader = function startReader(catalog, vault) {
   previous.addEventListener("click", () => adjacent(-1));
   next.addEventListener("click", () => adjacent(1));
   document.addEventListener("click", event => {
+    if (!brandMenu.contains(event.target) && collectionsToggle.getAttribute("aria-expanded") === "true") {
+      dismissCollections();
+      if (brandMenu.contains(document.activeElement)) document.activeElement.blur();
+    }
     const anchor = event.target.closest("a[href]");
     if (!anchor || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     const href = anchor.getAttribute("href");
     if (!href.startsWith("#")) return;
     event.preventDefault();
+    if (brandMenu.contains(anchor)) {
+      dismissCollections();
+      if (brandMenu.contains(document.activeElement)) document.activeElement.blur();
+    }
     if (location.hash === href) renderRoute();
     else location.hash = href;
   });
