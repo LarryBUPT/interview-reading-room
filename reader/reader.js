@@ -78,8 +78,8 @@ window.startReader = function startReader(catalog, vault) {
     return [...new Set(book.chapters.map(chapter => chapter.group).filter(Boolean))];
   }
 
-  function questionHeadings(chapter) {
-    return chapter.headings.filter(heading => heading.level === (chapter.questionLevel ?? 3));
+  function questionHeadings({ headings, questionLevel = 3 }) {
+    return headings.filter(heading => heading.level === questionLevel);
   }
 
   function prepareChapterToc(book, chapter) {
