@@ -162,6 +162,12 @@
     table { border-collapse: collapse; display: block; max-width: 100%; overflow-x: auto; margin: 20px 0; }
     th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
     th { background: var(--table-heading); }
+    #content > h2[id$="--h-模块知识体系python-3-数据结构与思路"] + p + p + table {
+      & th:nth-child(1) { min-width: 116px; }
+      & th:nth-child(2) { min-width: 185px; }
+      & th:nth-child(3) { min-width: 155px; }
+      & th:nth-child(4) { min-width: 246px; }
+    }
     .chapter-list { display: grid; gap: 8px; list-style: none; padding: 0; }
     .chapter-list a { display: block; border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; text-decoration: none; }
     .chapter-list a:hover { background: var(--hover); }
